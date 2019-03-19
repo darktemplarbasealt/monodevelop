@@ -25,33 +25,31 @@
 // THE SOFTWARE.
 
 using System.IO;
-using LibGit2Sharp;
 using MonoDevelop.Ide.Projects;
 using MonoDevelop.Ide.Templates;
 using MonoDevelop.Core;
-using MonoDevelop.Projects;
-using MonoDevelop.Ide;
-using System.Linq;
 
 namespace MonoDevelop.VersionControl.Git
 {
 	public class ProjectTemplateHandler : IVersionControlProjectTemplateHandler
 	{
+		const string GitIgnore = ".gitignore";
+
 		public void Run (NewProjectConfiguration config)
 		{
 			if (config.UseGit) {
-				bool isUsingGit = IsUsingGit (config.SolutionLocation);
-				if (!isUsingGit) {
-					if (config.CreateGitIgnoreFile) {
-						CreateGitIgnoreFile (config.SolutionLocation);
-					}
-
-					CreateGitRepository (config.SolutionLocation);
+				string solutionLocation = config.SolutionLocation;
+				if (config.CreateGitIgnoreFile) {
+					if (!ExistsGitIgnore (solutionLocation))
+						CreateGitIgnoreFile (solutionLocation);
 				}
+
+				if (!ExistsGitRepository (solutionLocation))
+					CreateGitRepository (solutionLocation);
 			}
 		}
 
-		bool IsUsingGit (string path)
+		bool ExistsGitRepository (string path)
 		{
 			bool isGitRepository = false;
 			DirectoryInfo repoDirectory = new DirectoryInfo (path);
@@ -68,9 +66,27 @@ namespace MonoDevelop.VersionControl.Git
 			return isGitRepository;
 		}
 
+		bool ExistsGitIgnore (string path)
+		{
+			bool existsGitIgnore = false;
+			DirectoryInfo repoDirectory = new DirectoryInfo (path);
+
+			while (repoDirectory != null) {
+				FilePath filePath = new FilePath (repoDirectory.FullName);
+				FilePath gitIgnoreFilePath = filePath.Combine (GitIgnore);
+
+				if (File.Exists (gitIgnoreFilePath)) {
+					existsGitIgnore = true;
+					break;
+				}
+				repoDirectory = repoDirectory.Parent;
+			}
+			return existsGitIgnore;
+		}
+
 		void CreateGitIgnoreFile (FilePath solutionPath)
 		{
-			FilePath gitIgnoreFilePath = solutionPath.Combine (".gitignore");
+			FilePath gitIgnoreFilePath = solutionPath.Combine (GitIgnore);
 			if (!File.Exists (gitIgnoreFilePath)) {
 				FilePath sourceGitIgnoreFilePath = GetSourceGitIgnoreFilePath ();
 				File.Copy (sourceGitIgnoreFilePath, gitIgnoreFilePath);
