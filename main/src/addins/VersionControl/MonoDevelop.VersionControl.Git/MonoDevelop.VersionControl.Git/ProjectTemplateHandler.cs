@@ -29,6 +29,9 @@ using LibGit2Sharp;
 using MonoDevelop.Ide.Projects;
 using MonoDevelop.Ide.Templates;
 using MonoDevelop.Core;
+using MonoDevelop.Projects;
+using MonoDevelop.Ide;
+using System.Linq;
 
 namespace MonoDevelop.VersionControl.Git
 {
@@ -37,12 +40,32 @@ namespace MonoDevelop.VersionControl.Git
 		public void Run (NewProjectConfiguration config)
 		{
 			if (config.UseGit) {
-				if (config.CreateGitIgnoreFile) {
-					CreateGitIgnoreFile (config.SolutionLocation);
-				}
+				bool isUsingGit = IsUsingGit (config.SolutionLocation);
+				if (!isUsingGit) {
+					if (config.CreateGitIgnoreFile) {
+						CreateGitIgnoreFile (config.SolutionLocation);
+					}
 
-				CreateGitRepository (config.SolutionLocation);
+					CreateGitRepository (config.SolutionLocation);
+				}
 			}
+		}
+
+		bool IsUsingGit (string path)
+		{
+			bool isGitRepository = false;
+			DirectoryInfo repoDirectory = new DirectoryInfo (path);
+
+			while (repoDirectory != null) {
+				FilePath filePath = new FilePath (repoDirectory.FullName);
+
+				if (filePath.Combine (".git").IsDirectory) {
+					isGitRepository = true;
+					break;
+				}
+				repoDirectory = repoDirectory.Parent;
+			}
+			return isGitRepository;
 		}
 
 		void CreateGitIgnoreFile (FilePath solutionPath)
