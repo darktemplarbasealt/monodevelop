@@ -202,6 +202,7 @@ namespace MonoDevelop.Ide.Projects
 			FilePath selectedFolder = BrowseForFolder (startingFolder);
 			if (selectedFolder != null) {
 				locationTextBox.Text = selectedFolder;
+				useGitCheckBox.Sensitive = projectConfiguration.IsUseGitEnabled;
 			}
 		}
 

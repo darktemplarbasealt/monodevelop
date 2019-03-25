@@ -33,60 +33,37 @@ namespace MonoDevelop.VersionControl.Git
 {
 	public class ProjectTemplateHandler : IVersionControlProjectTemplateHandler
 	{
-		const string GitIgnore = ".gitignore";
-
-		public void Run (NewProjectConfiguration config)
-		{
-			if (config.UseGit) {
-				string solutionLocation = config.SolutionLocation;
-				if (config.CreateGitIgnoreFile) {
-					if (!ExistsGitIgnore (solutionLocation))
-						CreateGitIgnoreFile (solutionLocation);
-				}
-
-				if (!ExistsGitRepository (solutionLocation))
-					CreateGitRepository (solutionLocation);
-			}
-		}
-
-		bool ExistsGitRepository (string path)
+		public bool CanCreateRepository (FilePath filePath)
 		{
 			bool isGitRepository = false;
-			DirectoryInfo repoDirectory = new DirectoryInfo (path);
+			DirectoryInfo repoDirectory = new DirectoryInfo (filePath);
 
 			while (repoDirectory != null) {
-				FilePath filePath = new FilePath (repoDirectory.FullName);
+				FilePath path = new FilePath (repoDirectory.FullName);
 
-				if (filePath.Combine (".git").IsDirectory) {
+				if (path.Combine (".git").IsDirectory) {
 					isGitRepository = true;
 					break;
 				}
 				repoDirectory = repoDirectory.Parent;
 			}
-			return isGitRepository;
+			return !isGitRepository;
 		}
 
-		bool ExistsGitIgnore (string path)
+		public void Run (NewProjectConfiguration config)
 		{
-			bool existsGitIgnore = false;
-			DirectoryInfo repoDirectory = new DirectoryInfo (path);
-
-			while (repoDirectory != null) {
-				FilePath filePath = new FilePath (repoDirectory.FullName);
-				FilePath gitIgnoreFilePath = filePath.Combine (GitIgnore);
-
-				if (File.Exists (gitIgnoreFilePath)) {
-					existsGitIgnore = true;
-					break;
+			if (config.UseGit) {
+				if (config.CreateGitIgnoreFile) {
+					CreateGitIgnoreFile (config.SolutionLocation);
 				}
-				repoDirectory = repoDirectory.Parent;
+
+				CreateGitRepository (config.SolutionLocation);
 			}
-			return existsGitIgnore;
 		}
 
 		void CreateGitIgnoreFile (FilePath solutionPath)
 		{
-			FilePath gitIgnoreFilePath = solutionPath.Combine (GitIgnore);
+			FilePath gitIgnoreFilePath = solutionPath.Combine (".gitignore");
 			if (!File.Exists (gitIgnoreFilePath)) {
 				FilePath sourceGitIgnoreFilePath = GetSourceGitIgnoreFilePath ();
 				File.Copy (sourceGitIgnoreFilePath, gitIgnoreFilePath);
@@ -95,15 +72,14 @@ namespace MonoDevelop.VersionControl.Git
 
 		FilePath GetSourceGitIgnoreFilePath ()
 		{
-			string directory = Path.GetDirectoryName (typeof(ProjectTemplateHandler).Assembly.Location);
+			string directory = Path.GetDirectoryName (typeof (ProjectTemplateHandler).Assembly.Location);
 			return FilePath.Build (directory, "GitIgnore.txt");
 		}
 
 		void CreateGitRepository (FilePath solutionPath)
 		{
 			using (var repo = GitUtil.Init (solutionPath, null))
-				LibGit2Sharp.Commands.Stage (repo ,"*");
+				LibGit2Sharp.Commands.Stage (repo, "*");
 		}
 	}
 }
-

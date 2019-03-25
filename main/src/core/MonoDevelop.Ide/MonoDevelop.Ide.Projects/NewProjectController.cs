@@ -283,7 +283,10 @@ namespace MonoDevelop.Ide.Projects
 		{
 			finalConfigurationPage = new FinalProjectConfigurationPage (projectConfiguration);
 			finalConfigurationPage.ParentFolder = ParentFolder;
-			finalConfigurationPage.IsUseGitEnabled = IsNewSolution && (versionControlHandler != null);
+			finalConfigurationPage.IsUseGitEnabled = IsNewSolution && versionControlHandler != null;
+			finalConfigurationPage.ParentFolderChanged += (sender, e) => {
+				finalConfigurationPage.IsUseGitEnabled = versionControlHandler.CanCreateRepository (projectConfiguration.Location);
+			};
 			finalConfigurationPage.IsValidChanged += (sender, e) => {
 				dialog.CanMoveToNextPage = finalConfigurationPage.IsValid;
 			};

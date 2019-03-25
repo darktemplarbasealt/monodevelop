@@ -87,6 +87,7 @@ namespace MonoDevelop.Ide.Projects
 			set {
 				config.Location = value;
 				CheckIsValid ();
+				OnParentFolderChanged ();
 			}
 		}
 
@@ -232,12 +233,16 @@ namespace MonoDevelop.Ide.Projects
 		}
 
 		public event EventHandler IsValidChanged;
+		public event EventHandler ParentFolderChanged;
 
 		void OnIsValidChanged ()
 		{
-			if (IsValidChanged != null) {
-				IsValidChanged (this, new EventArgs ());
-			}
+			IsValidChanged?.Invoke (this, new EventArgs ());
+		}
+
+		void OnParentFolderChanged ()
+		{
+			ParentFolderChanged?.Invoke (this, new EventArgs ());
 		}
 
 		public void UpdateFromParameters ()
