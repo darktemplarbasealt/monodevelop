@@ -28,6 +28,7 @@ using System.IO;
 using MonoDevelop.Ide.Projects;
 using MonoDevelop.Ide.Templates;
 using MonoDevelop.Core;
+using System;
 
 namespace MonoDevelop.VersionControl.Git
 {
@@ -35,19 +36,12 @@ namespace MonoDevelop.VersionControl.Git
 	{
 		public bool CanCreateRepository (FilePath filePath)
 		{
-			bool isGitRepository = false;
-			DirectoryInfo repoDirectory = new DirectoryInfo (filePath);
-
-			while (repoDirectory != null) {
-				FilePath path = new FilePath (repoDirectory.FullName);
-
-				if (path.Combine (".git").IsDirectory) {
-					isGitRepository = true;
-					break;
-				}
-				repoDirectory = repoDirectory.Parent;
+			try {
+				return String.IsNullOrEmpty (LibGit2Sharp.Repository.Discover (filePath.ResolveLinks ()));
+			} catch (Exception ex) {
+				LoggingService.LogInternalError ("Discovering Git repository failed", ex);
+				return false;
 			}
-			return !isGitRepository;
 		}
 
 		public void Run (NewProjectConfiguration config)

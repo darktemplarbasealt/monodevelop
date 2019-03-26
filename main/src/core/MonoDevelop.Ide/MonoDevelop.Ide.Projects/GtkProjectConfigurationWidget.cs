@@ -203,6 +203,7 @@ namespace MonoDevelop.Ide.Projects
 			if (selectedFolder != null) {
 				locationTextBox.Text = selectedFolder;
 				useGitCheckBox.Sensitive = projectConfiguration.IsUseGitEnabled;
+				useGitCheckBox.Active &= projectConfiguration.IsUseGitEnabled;
 			}
 		}
 
