@@ -506,6 +506,14 @@ namespace MonoDevelop.VersionControl.Git
 			return readingOperationFactory.StartNew (() => action (GetRepository (localPath))).RunWaitAndCapture ();
 		}
 
+		internal Task<T> RunOperationAsync<T> (FilePath localPath, Func<LibGit2Sharp.Repository, T> action, bool hasUICallbacks = false, CancellationToken cancellationToken = default)
+		{
+			EnsureInitialized ();
+			if (hasUICallbacks)
+				EnsureBackgroundThread ();
+			return readingOperationFactory.StartNew (() => action (GetRepository (localPath)), cancellationToken);
+		}
+
 		internal void RunBlockingOperation (Action action, bool hasUICallbacks = false)
 		{
 			if (hasUICallbacks)
@@ -2117,8 +2125,13 @@ namespace MonoDevelop.VersionControl.Git
 			return rev;
 		}
 
+		string shortName;
 		public override string ShortName {
-			get { return rev.Length > 10 ? rev.Substring (0, 10) : rev; }
+			get {
+				if (shortName != null)
+					return shortName;
+				return shortName = rev.Length > 10 ? rev.Substring (0, 10) : rev; 
+			}
 		}
 
 		internal Commit GetCommit (LibGit2Sharp.Repository repository)
@@ -2128,10 +2141,10 @@ namespace MonoDevelop.VersionControl.Git
 			return repository.Lookup<Commit> (rev);
 		}
 
-		public override Revision GetPrevious ()
+		public override Task<Revision> GetPreviousAsync (CancellationToken cancellationToken)
 		{
 			var repo = (GitRepository)Repository;
-			return repo.RunOperation (GitRepository, repository => GetPrevious (repository));
+			return repo.RunOperationAsync (GitRepository, repository => GetPrevious (repository), cancellationToken: cancellationToken);
 		}
 
 		internal Revision GetPrevious (LibGit2Sharp.Repository repository)
