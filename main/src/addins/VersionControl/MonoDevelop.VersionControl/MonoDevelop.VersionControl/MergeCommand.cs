@@ -35,19 +35,24 @@ namespace MonoDevelop.VersionControl
 	public class MergeCommand
 	{
 		internal static readonly string MergeViewHandlers = "/MonoDevelop/VersionControl/MergeViewHandler";
-		
-		static bool CanShow (VersionControlItem item)
+
+		static async Task<bool> CanShowAsync (VersionControlItem item)
 		{
 			return !item.IsDirectory
-				&& item.VersionInfo.IsVersioned
+				&& (await item.GetVersionInfoAsync()).IsVersioned
 				&& AddinManager.GetExtensionObjects<IVersionControlViewHandler> (MergeViewHandlers).Any (h => h.CanHandle (item, null));
 		}
 		
 		public static async Task<bool> Show (VersionControlItemList items, bool test)
 		{
-			if (test)
-				return items.All (CanShow);
-			
+			if (test) {
+				foreach (var item in items) {
+					if (!await CanShowAsync (item))
+						return false;
+				}
+				return true;
+			}
+
 			foreach (var item in items) {
 				var document = await IdeApp.Workbench.OpenDocument (item.Path, item.ContainerProject, OpenDocumentOptions.Default | OpenDocumentOptions.OnlyInternalViewer);
 				document?.GetContent<VersionControlDocumentController> ()?.ShowMergeView ();

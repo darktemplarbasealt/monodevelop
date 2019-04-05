@@ -36,6 +36,7 @@ using System.ComponentModel;
 using MonoDevelop.Core;
 using MonoDevelop.Ide.Gui;
 using MonoDevelop.Ide.Gui.Content;
+using System.Threading.Tasks;
 
 namespace MonoDevelop.VersionControl.Views
 {
@@ -187,11 +188,11 @@ namespace MonoDevelop.VersionControl.Views
 		public void SetRevision (MonoTextEditor toEditor, Revision rev)
 		{
 			BackgroundWorker worker = new BackgroundWorker ();
-			worker.DoWork += delegate(object sender, DoWorkEventArgs e) {
+			worker.DoWork += async delegate(object sender, DoWorkEventArgs e) {
 				Revision workingRevision = (Revision)e.Argument;
 				string text = null;
 				try {
-					text = info.Item.Repository.GetTextAtRevision (info.Item.VersionInfo.LocalPath, workingRevision);
+					text = await info.Item.Repository.GetTextAtRevisionAsync ((await info.Item.GetVersionInfoAsync ()).LocalPath, workingRevision);
 				} catch (Exception ex) {
 					text = string.Format (GettextCatalog.GetString ("Error while getting the text of revision {0}:\n{1}"), workingRevision, ex.ToString ());
 					MessageService.ShowError (text);
@@ -285,16 +286,18 @@ namespace MonoDevelop.VersionControl.Views
 					} else {
 						widget.originalRevision = null;
 					}
-					string text;
-					try {
-						text = widget.info.Item.Repository.GetBaseText (widget.info.Item.Path);
-					} catch (Exception ex) {
-						text = string.Format (GettextCatalog.GetString ("Error while getting the base text of {0}:\n{1}"), widget.info.Item.Path, ex.ToString ());
-						MessageService.ShowError (text);
-					}
-					
-					((MonoTextEditor)box.Tag).Document.Text = text;
-					widget.CreateDiff ();
+					Task.Run (async () => {
+						try {
+							return await widget.info.Item.Repository.GetBaseTextAsync (widget.info.Item.Path);
+						} catch (Exception ex) {
+							var text = string.Format (GettextCatalog.GetString ("Error while getting the base text of {0}:\n{1}"), widget.info.Item.Path, ex.ToString ());
+							await Runtime.RunInMainThread (() => MessageService.ShowError (text));
+							return text;
+						}
+					}).ContinueWith (t => {
+						((MonoTextEditor)box.Tag).Document.Text = t.Result;
+						widget.CreateDiff ();
+					}, Runtime.MainTaskScheduler);
 					return;
 				}
 				

@@ -36,20 +36,22 @@ namespace MonoDevelop.VersionControl
 	public class BlameCommand
 	{
 		internal static readonly string BlameViewHandlers = "/MonoDevelop/VersionControl/BlameViewHandler";
-		
-		static bool CanShow (VersionControlItem item)
-		{
-			return !item.IsDirectory
+
+		static async Task<bool> CanShow (VersionControlItem item) => !item.IsDirectory
 				// FIXME: Review appending of Annotate support and use it.
-				&& item.VersionInfo.IsVersioned
+				&& (await item.GetVersionInfoAsync ()).IsVersioned
 				&& AddinManager.GetExtensionObjects<IVersionControlViewHandler> (BlameViewHandlers).Any (h => h.CanHandle (item, null));
-		}
-		
+
 		public static async Task<bool> Show (VersionControlItemList items, bool test)
 		{
-			if (test)
-				return items.All (CanShow);
-			
+			if (test) {
+				foreach (var item in items) {
+					if (!await CanShow (item))
+						return false;
+				}
+				return true;
+			}
+
 			foreach (var item in items) {
 				var document = await IdeApp.Workbench.OpenDocument (item.Path, item.ContainerProject, OpenDocumentOptions.Default | OpenDocumentOptions.OnlyInternalViewer);
 				document?.GetContent<VersionControlDocumentController> ()?.ShowBlameView ();

@@ -1,21 +1,21 @@
-// 
+//
 // VersionControlView.cs
-//  
+//
 // Author:
 //       Mike Krüger <mkrueger@novell.com>
-// 
+//
 // Copyright (c) 2010 Novell, Inc (http://www.novell.com)
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -39,7 +39,7 @@ namespace MonoDevelop.VersionControl.Views
 	public interface IDiffView
 	{
 	}
-	
+
 	class DiffView : DocumentController, IDiffView, IUndoHandler, IClipboardHandler
 	{
 		DiffWidget widget;
@@ -50,7 +50,7 @@ namespace MonoDevelop.VersionControl.Views
 				widget = new DiffWidget (info);
 
 				try {
-					ComparisonWidget.DiffEditor.Document.Text = info.Item.Repository.GetBaseText (info.Item.Path);
+					ComparisonWidget.DiffEditor.Document.Text = info.Item.Repository.GetBaseTextAsync (info.Item.Path).Result;
 				} catch (Exception ex) {
 					LoggingService.LogInternalError ("Error fetching text from repository ", ex);
 				}
@@ -72,7 +72,7 @@ namespace MonoDevelop.VersionControl.Views
 				return this.widget.ComparisonWidget;
 			}
 		}
-		
+
 		public List<Mono.TextEditor.Utils.Hunk> Diff {
 			get {
 				return ComparisonWidget.Diff;
@@ -84,7 +84,7 @@ namespace MonoDevelop.VersionControl.Views
 		{
 			this.info = info;
 		}
-		
+
 		#region IAttachableViewContent implementation
 
 		public int GetLineInCenter (Mono.TextEditor.MonoTextEditor editor)
@@ -92,7 +92,7 @@ namespace MonoDevelop.VersionControl.Views
 			double midY = editor.VAdjustment.Value + editor.Allocation.Height / 2;
 			return editor.YToLine (midY);
 		}
-		
+
 		protected override void OnFocused ()
 		{
 			info.Start ();
@@ -103,13 +103,13 @@ namespace MonoDevelop.VersionControl.Views
 				var (line,column) = textView.Caret.Position.BufferPosition.GetLineAndColumn1Based();
 				ComparisonWidget.OriginalEditor.SetCaretTo (line, column);
 			}
-			
+
 			if (ComparisonWidget.Allocation.Height == 1 && ComparisonWidget.Allocation.Width == 1) {
 				ComparisonWidget.SizeAllocated += HandleComparisonWidgetSizeAllocated;
 			} else {
 				HandleComparisonWidgetSizeAllocated (null, new Gtk.SizeAllocatedArgs ());
 			}
-			
+
 			widget.UpdatePatchView ();
 		}
 
@@ -123,7 +123,7 @@ namespace MonoDevelop.VersionControl.Views
 				ComparisonWidget.OriginalEditor.GrabFocus ();
 			}
 		}
-		
+
 		protected override void OnUnfocused ()
 		{
 			var textView = info.Controller.GetContent <ITextView> ();
@@ -141,7 +141,7 @@ namespace MonoDevelop.VersionControl.Views
 		}
 
 		#endregion
-		
+
 		#region IUndoHandler implementation
 		void IUndoHandler.Undo ()
 		{
