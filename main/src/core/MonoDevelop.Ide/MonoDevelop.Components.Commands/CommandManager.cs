@@ -73,7 +73,7 @@ namespace MonoDevelop.Components.Commands
 		CommandTargetChain globalHandlerChain;
 		List<object> commandUpdateErrors = new List<object> ();
 		List<ICommandTargetVisitor> visitors = new List<ICommandTargetVisitor> ();
-		LinkedList<Gtk.Window> topLevelWindows = new LinkedList<Gtk.Window> ();
+		LinkedList<Window> topLevelWindows = new LinkedList<Window> ();
 		Stack delegatorStack = new Stack ();
 
 		HashSet<object> visitedTargets = new HashSet<object> ();
@@ -86,13 +86,13 @@ namespace MonoDevelop.Components.Commands
 		
 		// Fields used to keep track of the application focus
 		bool appHasFocus;
-		Gtk.Window lastFocused;
+		Window lastFocused;
 		DateTime focusCheckDelayTimeout = DateTime.MinValue;
 		
 		internal static readonly object CommandRouteTerminator = new object ();
 		
 		internal bool handlerFoundInMulticast;
-		Gtk.Widget lastActiveWidget;
+		Control lastActiveWidget;
 
 #if MAC
 		Foundation.NSObject keyMonitor;
@@ -335,8 +335,8 @@ namespace MonoDevelop.Components.Commands
 				{
 					// If the window is a gtk window and is registered in the command manager
 					// process the events through the handler.
-					var gtkWindow = MonoDevelop.Components.Mac.GtkMacInterop.GetGtkWindow(window);
-					if (gtkWindow != null && !TopLevelWindowStack.Contains(gtkWindow))
+					var gtkWindow = Mac.GtkMacInterop.GetGtkWindow(window);
+					if (gtkWindow != null && !TopLevelWindowStack.Any (w => w.nativeWidget == gtkWindow))
 						return null;
 				}
 			}
@@ -347,7 +347,7 @@ namespace MonoDevelop.Components.Commands
 				return ev;
 			}
 
-			var gdkev = MonoDevelop.Components.Mac.GtkMacInterop.ConvertKeyEvent (ev);
+			var gdkev = Mac.GtkMacInterop.ConvertKeyEvent (ev);
 			if (gdkev != null) {
 				if (ProcessKeyEvent (gdkev))
 					return null;
@@ -727,11 +727,11 @@ namespace MonoDevelop.Components.Commands
 			RegisterTopWindow (rootWidget);
 		}
 
-		internal IEnumerable<Gtk.Window> TopLevelWindowStack {
+		internal IEnumerable<MonoDevelop.Components.Window> TopLevelWindowStack {
 			get { return topLevelWindows; }
 		}
-		
-		internal void RegisterTopWindow (Gtk.Window win)
+
+		internal void RegisterTopWindow (Window win)
 		{
 			if (topLevelWindows.First != null && topLevelWindows.First.Value == win)
 				return;
@@ -748,16 +748,18 @@ namespace MonoDevelop.Components.Commands
 
 			var node = topLevelWindows.Find (win);
 			if (node != null) {
-				if (win.HasToplevelFocus) {
+				if (win.HasFocus) {
 					topLevelWindows.Remove (node);
 					topLevelWindows.AddFirst (node);
 				}
 			} else {
 				topLevelWindows.AddFirst (win);
-				win.KeyPressEvent += OnKeyPressed;
-				win.KeyReleaseEvent += OnKeyReleased;
-				win.ButtonPressEvent += HandleButtonPressEvent;
-				win.Destroyed += TopLevelDestroyed;
+				if (win.nativeWidget is Gtk.Window gtkWin) {
+					gtkWin.KeyPressEvent += OnKeyPressed;
+					gtkWin.KeyReleaseEvent += OnKeyReleased;
+					gtkWin.ButtonPressEvent += HandleButtonPressEvent;
+					gtkWin.Destroyed += TopLevelDestroyed;
+				}
 			}
 		}
 
@@ -786,7 +788,7 @@ namespace MonoDevelop.Components.Commands
 			}
 #endif
 
-			if (w == lastFocused)
+			if (w == lastFocused.nativeWidget)
 				lastFocused = null;
 		}
 		
@@ -2096,10 +2098,10 @@ namespace MonoDevelop.Components.Commands
 			return h;
 		}
 
-		Gtk.Window GetCurrentFocusedTopLevelWindow ()
+		Window GetCurrentFocusedTopLevelWindow ()
 		{
 			foreach (var window in topLevelWindows) {
-				if (window.HasToplevelFocus)
+				if (window.HasFocus)
 					return window;
 			}
 			return rootWidget;
@@ -2197,7 +2199,7 @@ namespace MonoDevelop.Components.Commands
 			return null;
 		}
 		
-		Gtk.Window GetActiveWindow (Gtk.Window win)
+		Window GetActiveWindow (Window win)
 		{
 			Gtk.Window[] wins = Gtk.Window.ListToplevels ();
 			
@@ -2214,7 +2216,7 @@ namespace MonoDevelop.Components.Commands
 						if (win == null)
 							win = w;
 					}
-					if (lastFocused == w) {
+					if (lastFocused.nativeWidget == w) {
 						lastFocusedExists = true;
 					}
 				}
@@ -2224,7 +2226,9 @@ namespace MonoDevelop.Components.Commands
 			if (!hasFocus) {
 				var nsWindow = AppKit.NSApplication.SharedApplication.KeyWindow;
 				hasFocus = nsWindow != null;
-				lastFocused = win = Mac.GtkMacInterop.GetGtkWindow (nsWindow);
+                if (hasFocus) {
+					lastFocused = win = nsWindow;
+				}
 			} else {
 				lastFocused = newFocused;
 			}
@@ -2242,15 +2246,15 @@ namespace MonoDevelop.Components.Commands
 				return null;
 		}
 		
-		object GetActiveWidget (Gtk.Window win)
+		object GetActiveWidget (Window win)
 		{
 			win = GetActiveWindow (win);
 
-			Gtk.Widget widget = win;
+			Control widget = win;
 			if (win != null) {
 
 				#if MAC
-				var nw = MonoDevelop.Components.Mac.GtkMacInterop.GetNSWindow (win);
+				var nw = win.nativeWidget as AppKit.NSWindow;
 				if (nw != null) {
 					var v = nw.FirstResponder as AppKit.NSView;
 					if (v != null && !IsRootGdkQuartzView (v)) {
@@ -2432,8 +2436,10 @@ namespace MonoDevelop.Components.Commands
 			waitingForUserInteraction = true;
 			toolbarUpdaterRunning = false;
 			foreach (var win in topLevelWindows) {
-				win.MotionNotifyEvent += HandleWinMotionNotifyEvent;
-				win.FocusInEvent += HandleFocusInEventHandler;
+				if (!(win.nativeWidget is Gtk.Window gtkWindow))
+					continue;
+				gtkWindow.MotionNotifyEvent += HandleWinMotionNotifyEvent;
+				gtkWindow.FocusInEvent += HandleFocusInEventHandler;
 			}
 		}
 		
@@ -2443,8 +2449,10 @@ namespace MonoDevelop.Components.Commands
 				return;
 			waitingForUserInteraction = false;
 			foreach (var win in topLevelWindows) {
-				win.MotionNotifyEvent -= HandleWinMotionNotifyEvent;
-				win.FocusInEvent -= HandleFocusInEventHandler;
+				if (!(win.nativeWidget is Gtk.Window gtkWindow))
+					continue;
+				gtkWindow.MotionNotifyEvent -= HandleWinMotionNotifyEvent;
+				gtkWindow.FocusInEvent -= HandleFocusInEventHandler;
 			}
 
 			StartStatusUpdater ();
