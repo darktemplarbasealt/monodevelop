@@ -3206,7 +3206,7 @@
     <Compile Include="MonoDevelop.Ide.FindInFiles\Commands.cs" />
     <Compile Include="MonoDevelop.Ide.FindInFiles\Scope.cs" />
     <Compile Include="MonoDevelop.Ide.FindInFiles\FileProvider.cs" />
-    <Compile Include="MonoDevelop.Ide.FindInFiles\FilterOptions.cs" />
+    <Compile Include="MonoDevelop.Ide.FindInFiles\FindInFilesModel.cs" />
     <Compile Include="MonoDevelop.Ide.FindInFiles\FindReplace.cs" />
     <Compile Include="MonoDevelop.Ide.FindInFiles\SearchResultWidget.cs" />
     <Compile Include="MonoDevelop.Ide.FindInFiles\ISearchProgressMonitor.cs" />
@@ -4248,6 +4248,13 @@
     <Compile Include="MonoDevelop.Components.Commands\IdeCommandManager.cs" />
     <Compile Include="MonoDevelop.Ide.Gui\WorkbenchStatusBar.cs" />
     <Compile Include="MonoDevelop.Ide.FindInFiles\PatternSearcher.cs" />
+    <Compile Include="MonoDevelop.Ide.FindInFiles\Scope.DirectoryScope.cs" />
+    <Compile Include="MonoDevelop.Ide.FindInFiles\Scope.AllOpenFilesScope.cs" />
+    <Compile Include="MonoDevelop.Ide.FindInFiles\Scope.WholeProjectScope.cs" />
+    <Compile Include="MonoDevelop.Ide.FindInFiles\Scope.WholeSolutionScope.cs" />
+    <Compile Include="MonoDevelop.Ide.FindInFiles\Scope.SelectionScope.cs" />
+    <Compile Include="MonoDevelop.Ide.FindInFiles\Scope.DocumentScope.cs" />
+    <Compile Include="MonoDevelop.Ide.FindInFiles\FindInFilesController.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(Configuration)' == 'DebugMac' OR '$(Configuration)' == 'ReleaseMac'">
     <Compile Include="MonoDevelop.Components\Mac\KeyCodes.cs" />
