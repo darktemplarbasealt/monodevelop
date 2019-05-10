@@ -1,4 +1,4 @@
-//
+﻿//
 // FileNameEvalutor.cs
 //
 // Author:
@@ -31,9 +31,9 @@ using MonoDevelop.Core;
 
 namespace MonoDevelop.Ide.Extensions
 {
-	abstract class FileNameEvalutor
+	abstract class FileNameEvaluator
 	{
-		public static FileNameEvalutor CreateFileNameEvaluator (IEnumerable<string> patterns, char separator = '|')
+		public static FileNameEvaluator CreateFileNameEvaluator (IEnumerable<string> patterns, char separator = '|')
 		{
 			var splitPatterns = SplitPatterns (patterns, separator).ToList ();
 			if (EndsWithFileNameEvaluator.IsCompatible (splitPatterns))
@@ -54,7 +54,7 @@ namespace MonoDevelop.Ide.Extensions
 
 		public abstract bool SupportsFile (string fileName);
 
-		class RegexFileNameEvaluator : FileNameEvalutor
+		class RegexFileNameEvaluator : FileNameEvaluator
 		{
 			Regex regex;
 
@@ -85,7 +85,7 @@ namespace MonoDevelop.Ide.Extensions
 			}
 		}
 
-		class EndsWithFileNameEvaluator : FileNameEvalutor
+		class EndsWithFileNameEvaluator : FileNameEvaluator
 		{
 			string [] endings;
 
@@ -122,7 +122,7 @@ namespace MonoDevelop.Ide.Extensions
 			}
 		}
 
-		class ExactFileNameEvaluator : FileNameEvalutor
+		class ExactFileNameEvaluator : FileNameEvaluator
 		{
 			string [] names;
 
