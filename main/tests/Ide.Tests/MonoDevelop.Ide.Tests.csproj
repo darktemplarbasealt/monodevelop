@@ -130,6 +130,9 @@
     <Compile Include="MonoDevelop.Ide.Composition\CompositionManagerTests.cs" />
     <Compile Include="MonoDevelop.Ide.Gui\GLibLoggingTests.cs" />
     <Compile Include="MonoDevelop.Ide.FindInFiles\PatternSearcherTests.cs" />
+    <Compile Include="MonoDevelop.Ide.FindInFiles\ScopeTests.cs" />
+    <Compile Include="MonoDevelop.Ide.FindInFiles\FindInFilesModelTests.cs" />
+    <Compile Include="MonoDevelop.Ide.FindInFiles\FindInFilesSessionTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\core\MonoDevelop.Ide\MonoDevelop.Ide.csproj">
