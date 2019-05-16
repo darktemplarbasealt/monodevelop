@@ -27,8 +27,6 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-
-
 using System;
 using System.Collections.Generic;
 using Gtk;
@@ -40,7 +38,75 @@ using MonoDevelop.Ide.Gui;
 
 namespace MonoDevelop.Components.Docking
 {
-	class DockContainer: Container
+	class SplitterContainerWidget : NativeContainerWidget<MacSplitterWidget>, ISplitterWidget
+	{
+		public SplitterContainerWidget (IntPtr raw) : base (raw)
+		{
+		}
+
+		protected SplitterContainerWidget ()
+		{
+		}
+
+		protected SplitterContainerWidget (GLib.GType gtype) : base (gtype)
+		{
+		}
+
+		public void Init (DockGroup grp, int index)
+		{
+			NativeContent?.Init (grp, index);
+		}
+
+		public void SetSize (Rectangle rect)
+		{
+			OnSizeAllocated (rect);
+		}
+
+		protected override void OnSizeAllocated (Rectangle allocation)
+		{
+			//Accessible.SetOrientation (allocation.Height > allocation.Width ? Orientation.Vertical : Orientation.Horizontal);
+			base.OnSizeAllocated (allocation);
+		}
+	}
+
+	class NativeContainerWidget<T> : Gtk.Widget
+	{
+		public NativeContainerWidget (IntPtr raw) : base (raw)
+		{
+
+		}
+
+		protected NativeContainerWidget ()
+		{
+
+		}
+
+		protected NativeContainerWidget (GLib.GType gtype) : base (gtype)
+		{
+
+		}
+
+		public T NativeContent { get; private set; }
+		public virtual void SetNativeContent (T widget)
+		{
+			this.NativeContent = widget;
+
+			CanFocus = true;
+			Sensitive = true;
+		}
+
+		bool disposing = false;
+		public override void Dispose ()
+		{
+			if (!disposing) {
+				disposing = true;
+				NativeContent = default (T);
+			}
+			base.Dispose ();
+		}
+	}
+
+	class DockContainer : Container
 	{
 		DockLayout layout;
 		DockFrame frame;
@@ -48,7 +114,7 @@ namespace MonoDevelop.Components.Docking
 		List<TabStrip> notebooks = new List<TabStrip> ();
 		List<DockItem> items = new List<DockItem> ();
 
-		List<SplitterWidget> splitters = new List<SplitterWidget> ();
+		List<SplitterWidgetWrapper> splitters = new List<SplitterWidgetWrapper> ();
 
 		bool needsRelayout = true;
 
@@ -173,7 +239,7 @@ namespace MonoDevelop.Components.Docking
 				a.Height = 5;
 				a.Y -= 2;
 			}
-			s.SizeAllocate (a);
+			s.SetSize (a);
 			s.Init (grp, index);
 		}
 		
@@ -190,7 +256,7 @@ namespace MonoDevelop.Components.Docking
 			}
 			foreach (var s in splitters)
 				if (s.Parent != null)
-					callback (s);
+					callback ((Widget)s.NativeWidget);
 		}
 		
 		protected override bool OnExposeEvent (Gdk.EventExpose evnt)
@@ -288,7 +354,7 @@ namespace MonoDevelop.Components.Docking
 			for (int n=0; n < splitters.Count; n++) {
 				var s = splitters [n];
 				if (s.Parent != null)
-					Remove (s);
+					Remove ((Widget)s.NativeWidget);
 			}
 
 			// Hide the splitters that are not required
@@ -307,12 +373,22 @@ namespace MonoDevelop.Components.Docking
 					var s = splitters [n];
 					if (!s.Visible)
 						s.Show ();
-					Add (s);
+					Add ((Widget)s.NativeWidget);
 				} else {
-					var s = new SplitterWidget ();
+
+					SplitterWidgetWrapper s = null;
+#if MAC
+					var splitter = new MacSplitterWidget (this);
+					var widget = Mac.GtkMacInterop.NSViewToGtkWidget<SplitterContainerWidget> (splitter);
+					widget.SetNativeContent (splitter);
+
+#else
+                     var widget = new SplitterWidget ();
+#endif
+					s = new SplitterWidgetWrapper (widget);
 					splitters.Add (s);
 					s.Show ();
-					Add (s);
+					Add ((Widget)s.NativeWidget);
 				}
 			}
 		}
@@ -490,7 +566,7 @@ namespace MonoDevelop.Components.Docking
 			}
 		}
 		
-		internal class SplitterWidget: EventBox
+		internal class SplitterWidget: EventBox, ISplitterWidget
 		{
 			static Gdk.Cursor hresizeCursor = new Gdk.Cursor (CursorType.SbHDoubleArrow);
 			static Gdk.Cursor vresizeCursor = new Gdk.Cursor (CursorType.SbVDoubleArrow);
@@ -572,6 +648,11 @@ namespace MonoDevelop.Components.Docking
 					}
 				}
 				return base.OnMotionNotifyEvent (e);
+			}
+
+			public void SetSize (Rectangle rect)
+			{
+				OnSizeAllocated (rect);
 			}
 		}
 	}

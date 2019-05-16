@@ -46,6 +46,11 @@ namespace MonoDevelop.Components.Mac
 			return new Gtk.Widget (gtk_ns_view_new ((IntPtr)view.Handle));
 		}
 
+		public static T NSViewToGtkWidget<T> (NSView view)
+		{
+	        var x = (T) Activator.CreateInstance (typeof (T), new object [] { gtk_ns_view_new ((IntPtr)view.Handle) });
+			return x;
+		}
 
 		//this may be needed to work around focusing issues in GTK/Cocoa interop
 		public static void FocusWindow (Gtk.Window widget)
