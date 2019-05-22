@@ -1,4 +1,4 @@
-//
+﻿//
 // BlameView.cs
 //
 // Author:
@@ -57,7 +57,7 @@ namespace MonoDevelop.VersionControl.Views
 		}
 
 		#region IAttachableViewContent implementation
-		protected internal override void OnFocused ()
+		protected override void OnFocused ()
 		{
 			info.Start ();
 			widget.Reset ();
