@@ -152,6 +152,15 @@ namespace MonoDevelop.Ide.Projects
 		{
 			projectConfiguration.Location = locationTextBox.Text;
 			projectFolderPreviewWidget.UpdateLocation ();
+			UpdateGitStatus ();
+		}
+
+		void UpdateGitStatus()
+		{
+			useGitCheckBox.Sensitive = projectConfiguration.IsUseGitEnabled;
+			useGitCheckBox.Active = projectConfiguration.UseGit;
+			createGitIgnoreFileCheckBox.Sensitive = projectConfiguration.IsGitIgnoreEnabled;
+			createGitIgnoreFileCheckBox.Active = projectConfiguration.CreateGitIgnoreFile;
 		}
 
 		void ProjectNameTextInserted (object o, TextInsertedArgs args)
@@ -202,8 +211,6 @@ namespace MonoDevelop.Ide.Projects
 			FilePath selectedFolder = BrowseForFolder (startingFolder);
 			if (selectedFolder != null) {
 				locationTextBox.Text = selectedFolder;
-				useGitCheckBox.Sensitive = projectConfiguration.IsUseGitEnabled;
-				useGitCheckBox.Active &= projectConfiguration.IsUseGitEnabled;
 			}
 		}
 

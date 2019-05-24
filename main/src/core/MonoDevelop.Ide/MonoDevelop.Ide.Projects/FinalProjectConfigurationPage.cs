@@ -180,7 +180,7 @@ namespace MonoDevelop.Ide.Projects
 		}
 
 		public bool IsGitIgnoreEnabled {
-			get { return config.UseGit && IsUseGitEnabled && gitIgnoreEnabled; }
+			get { return config.UseGit && gitIgnoreEnabled; }
 		}
 
 		public bool IsUseGitEnabled { get; set; }
