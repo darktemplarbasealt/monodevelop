@@ -25,6 +25,8 @@
 // THE SOFTWARE.
 
 using System;
+using System.IO;
+using MonoDevelop.Core;
 using MonoDevelop.Core.StringParsing;
 using MonoDevelop.Ide.Templates;
 using ProjectCreateParameters = MonoDevelop.Projects.ProjectCreateParameters;
@@ -180,7 +182,7 @@ namespace MonoDevelop.Ide.Projects
 		}
 
 		public bool IsGitIgnoreEnabled {
-			get { return config.UseGit && gitIgnoreEnabled; }
+			get { return config.UseGit && gitIgnoreEnabled && EnableCreateGitIgnore(); }
 		}
 
 		public bool IsUseGitEnabled { get; set; }
@@ -264,6 +266,16 @@ namespace MonoDevelop.Ide.Projects
 				return Parameters.GetBoolValue (name);
 			}
 			return null;
+		}
+
+		bool EnableCreateGitIgnore ()
+		{
+			FilePath solutionPath = config.SolutionLocation;
+			if (Location == solutionPath) {
+				FilePath gitIgnoreFilePath = solutionPath.Combine (".gitignore");
+				return !File.Exists (gitIgnoreFilePath);
+			}
+			return true;
 		}
 	}
 }
