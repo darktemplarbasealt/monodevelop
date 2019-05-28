@@ -40,6 +40,7 @@ using System.Collections.Immutable;
 using MonoDevelop.Ide;
 using Microsoft.CodeAnalysis.CodeRefactorings;
 using MonoDevelop.Ide.Gui.Documents;
+using System.Threading;
 
 namespace MonoDevelop.AssemblyBrowser
 {
@@ -47,6 +48,7 @@ namespace MonoDevelop.AssemblyBrowser
 	{
 		readonly static string[] defaultAssemblies = new string[] { "mscorlib", "System", "System.Core", "System.Xml" };
 		AssemblyBrowserWidget widget;
+		CancellationTokenSource cts = new CancellationTokenSource ();
 		
 		protected override Control OnGetViewControl (DocumentViewContent view)
 		{
@@ -115,9 +117,10 @@ namespace MonoDevelop.AssemblyBrowser
 		{
 			IsDisposed = true;
 
-
-			if (currentWs != null) {
-				currentWs.WorkspaceLoaded -= Handle_WorkspaceLoaded;
+			if (cts != null) {
+				cts.Cancel ();
+				cts.Dispose ();
+				cts = null;
 			}
 
 			widget = null;
@@ -173,16 +176,6 @@ namespace MonoDevelop.AssemblyBrowser
 			//FindDerivedClassesHandler.FindDerivedClasses (type);
 		}
 
-		void Handle_WorkspaceLoaded (object sender, EventArgs e)
-		{
-			foreach (var project in Ide.IdeApp.ProjectOperations.CurrentSelectedSolution.GetAllProjects ()) {
-				var nav = Widget.TreeView.GetNodeAtObject (project);
-				if (nav != null)
-					Widget.TreeView.RefreshNode (nav);
-			}
-		}
-
-		Ide.TypeSystem.MonoDevelopWorkspace currentWs;
 		public void FillWidget ()
 		{
 			if (Ide.IdeApp.ProjectOperations.CurrentSelectedSolution == null) {
@@ -190,17 +183,22 @@ namespace MonoDevelop.AssemblyBrowser
 					Widget.AddReferenceByAssemblyName (assembly); 
 				}
 			} else {
-				currentWs = IdeApp.TypeSystemService.GetWorkspace (IdeApp.ProjectOperations.CurrentSelectedSolution);
-				if (currentWs != null)
-					currentWs.WorkspaceLoaded += Handle_WorkspaceLoaded;
-				foreach (var project in Ide.IdeApp.ProjectOperations.CurrentSelectedSolution.GetAllProjects ()) {
-					try {
-						Widget.AddProject (project, false);
-					} catch (Exception e) {
-						LoggingService.LogError ("Error while adding project " + project.Name + " to the tree.", e);
-					}
-				}
-				widget.StartSearch ();
+				var token = cts.Token;
+
+				var workspace = IdeApp.TypeSystemService.GetWorkspaceAsync (IdeApp.ProjectOperations.CurrentSelectedSolution)
+					.ContinueWith (t => {
+						if (token.IsCancellationRequested)
+							return;
+
+						foreach (var project in IdeApp.ProjectOperations.CurrentSelectedSolution.GetAllProjects ()) {
+							try {
+								Widget.AddProject (project, false);
+							} catch (Exception e) {
+								LoggingService.LogError ("Error while adding project " + project.Name + " to the tree.", e);
+							}
+						}
+						widget.StartSearch ();
+					}, token, TaskContinuationOptions.DenyChildAttach, Runtime.MainTaskScheduler);
 			}
 		}
 	}
