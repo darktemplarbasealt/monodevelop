@@ -4249,6 +4249,9 @@
     <Compile Include="MonoDevelop.Ide.Gui\WorkbenchStatusBar.cs" />
     <Compile Include="MonoDevelop.Components.Docking\MacSplitterWidget.cs" />
     <Compile Include="MonoDevelop.Components.Docking\SplitterWidgetWrapper.cs" />
+    <Compile Include="MonoDevelop.Components\Mac\DragCaptureEventMonitor.cs" />
+    <Compile Include="MonoDevelop.Components.Docking\SplitterContainerWidget.cs" />
+    <Compile Include="MonoDevelop.Components\NativeContainerWidget.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(Configuration)' == 'DebugMac' OR '$(Configuration)' == 'ReleaseMac'">
     <Compile Include="MonoDevelop.Components\Mac\KeyCodes.cs" />

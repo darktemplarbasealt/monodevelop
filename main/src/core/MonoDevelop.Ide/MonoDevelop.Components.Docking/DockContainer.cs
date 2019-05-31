@@ -35,77 +35,10 @@ using System.Linq;
 using MonoDevelop.Components.AtkCocoaHelper;
 using MonoDevelop.Core;
 using MonoDevelop.Ide.Gui;
+using GLib;
 
 namespace MonoDevelop.Components.Docking
 {
-	class SplitterContainerWidget : NativeContainerWidget<MacSplitterWidget>, ISplitterWidget
-	{
-		public SplitterContainerWidget (IntPtr raw) : base (raw)
-		{
-		}
-
-		protected SplitterContainerWidget ()
-		{
-		}
-
-		protected SplitterContainerWidget (GLib.GType gtype) : base (gtype)
-		{
-		}
-
-		public void Init (DockGroup grp, int index)
-		{
-			NativeContent?.Init (grp, index);
-		}
-
-		public void SetSize (Rectangle rect)
-		{
-			OnSizeAllocated (rect);
-		}
-
-		protected override void OnSizeAllocated (Rectangle allocation)
-		{
-			//Accessible.SetOrientation (allocation.Height > allocation.Width ? Orientation.Vertical : Orientation.Horizontal);
-			base.OnSizeAllocated (allocation);
-		}
-	}
-
-	class NativeContainerWidget<T> : Gtk.Widget
-	{
-		public NativeContainerWidget (IntPtr raw) : base (raw)
-		{
-
-		}
-
-		protected NativeContainerWidget ()
-		{
-
-		}
-
-		protected NativeContainerWidget (GLib.GType gtype) : base (gtype)
-		{
-
-		}
-
-		public T NativeContent { get; private set; }
-		public virtual void SetNativeContent (T widget)
-		{
-			this.NativeContent = widget;
-
-			CanFocus = true;
-			Sensitive = true;
-		}
-
-		bool disposing = false;
-		public override void Dispose ()
-		{
-			if (!disposing) {
-				disposing = true;
-				NativeContent = default (T);
-			}
-			base.Dispose ();
-		}
-	}
-
 	class DockContainer : Container
 	{
 		DockLayout layout;
@@ -378,9 +311,8 @@ namespace MonoDevelop.Components.Docking
 
 					SplitterWidgetWrapper s = null;
 #if MAC
-					var splitter = new MacSplitterWidget (this);
-					var widget = Mac.GtkMacInterop.NSViewToGtkWidget<SplitterContainerWidget> (splitter);
-					widget.SetNativeContent (splitter);
+					var splitter = new MacSplitterWidget ();
+					var widget = Mac.GtkMacInterop.NSViewToGtkWidget<MacSplitterWidget, SplitterContainerWidget> (splitter);
 
 #else
                      var widget = new SplitterWidget ();

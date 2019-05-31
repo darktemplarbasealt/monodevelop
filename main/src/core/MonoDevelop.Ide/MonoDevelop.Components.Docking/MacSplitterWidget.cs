@@ -36,34 +36,96 @@ using Gtk;
 using System.Collections.Generic;
 using Gdk;
 using CoreGraphics;
+using MonoDevelop.Components.Mac;
 
 namespace MonoDevelop.Components.Docking
 {
-	class MacSplitterWidget : NSView
+	internal class MacSplitterWidget : NSView, IDragCapturedView
 	{
 		DockGroup dockGroup;
 		int dockIndex;
 		Widget parent;
-		public MacSplitterWidget (Widget parent)
+
+		int dragPos, dragSize;
+		bool hover, dragging;
+
+		public event EventHandler DragStarted;
+		public event EventHandler DragEnd;
+
+		public MacSplitterWidget ()
 		{
-			this.parent = parent;
+			
 		}
 
-		public Widget Parent => parent;
-
-		bool hover;
 		public override void MouseEntered (NSEvent theEvent)
 		{
+			if (!dragging) {
+				SetDefaultCursor ();
+			}
 			hover = true;
 			base.MouseEntered (theEvent);
 		}
 
 		public override void MouseExited (NSEvent theEvent)
 		{
+			if (!dragging) {
+				NSCursor.ArrowCursor.Set ();
+			}
 			hover = false;
 			base.MouseExited (theEvent);
 		}
 
+		void SetDefaultCursor ()
+		{
+			if (dockGroup == null) {
+				return;
+			}
+			if (dockGroup.Type == DockGroupType.Horizontal) {
+				NSCursor.ResizeLeftRightCursor.Set ();
+			} else {
+				NSCursor.ResizeUpDownCursor.Set ();
+			}
+		}
+
+		public override void MouseMoved (NSEvent theEvent)
+		{
+			if (!dragging) {
+				SetDefaultCursor ();
+			}
+			base.MouseMoved (theEvent);
+		}
+
+		void RaiseEndDrag ()
+		{
+			if (dragging) {
+				dragging = false;
+				DragEnd?.Invoke (this, EventArgs.Empty);
+			}
+		}
+
+		public void Init (DockGroup grp, int index)
+		{
+			dockGroup = grp;
+			dockIndex = index;
+		}
+
+		public override void MouseDown (NSEvent theEvent)
+		{
+			dragging = true;
+
+			var point = NSEvent.CurrentMouseLocation;
+			var obj = dockGroup.VisibleObjects [dockIndex];
+
+			if (dockGroup.Type == DockGroupType.Horizontal) {
+				dragPos = (int)point.X;
+				dragSize = obj.Allocation.Width;
+			} else {
+				dragPos = (int)point.Y;
+				dragSize = obj.Allocation.Height;
+			}
+
+			DragStarted?.Invoke (this, EventArgs.Empty);
+		}
 
 		NSTrackingArea trackingArea;
 		public override void UpdateTrackingAreas ()
@@ -77,54 +139,41 @@ namespace MonoDevelop.Components.Docking
 			AddTrackingArea (trackingArea);
 		}
 
-		public void Init (DockGroup grp, int index)
-		{
-			dockGroup = grp;
-			dockIndex = index;
-		}
+		#region Drag
 
-		int dragPos;
-		int dragSize;
-
-		public override void MouseDown (NSEvent theEvent)
+		public void MouseDragUp (NSEvent theEvent)
 		{
-			NSCursor.ClosedHandCursor.Set ();
-		}
-
-		public override void MouseMoved (NSEvent theEvent)
-		{
-			NSCursor.OpenHandCursor.Set ();
-			base.MouseMoved (theEvent);
-		}
-
-		public override void MouseUp (NSEvent theEvent)
-		{
-			dragging = false;
 			if (hover) {
-				NSCursor.OpenHandCursor.Set ();
+				NSCursor.ResizeLeftRightCursor.Set ();
 			} else {
 				NSCursor.ArrowCursor.Set ();
 			}
-            base.MouseUp (theEvent);
+			RaiseEndDrag ();
 		}
 
-		CGPoint point;
-		bool dragging;
-		public override void MouseDragged (NSEvent theEvent)
+		public void MouseDrag (NSEvent theEvent)
 		{
-			dragging = true;
+			var point = NSEvent.CurrentMouseLocation;
+			int newpos; // = (dockGroup.Type == DockGroupType.Horizontal) ? (int)point.X : -(int)point.Y;
+			if (dockGroup.Type == DockGroupType.Horizontal) {
+				newpos = (int)point.X;
+			} else {
+				newpos = (int)point.Y;
+			}
 
-			NSCursor.ClosedHandCursor.Set ();
-
-			//point = ConvertPointFromView (theEvent.LocationInWindow, null);
-			////moving
-			////dragin started
-			//dragPos = (dockGroup.Type == DockGroupType.Horizontal) ? (int)point.X : (int)point.Y;
-			//var obj = dockGroup.VisibleObjects [dockIndex];
-			//dragSize = (dockGroup.Type == DockGroupType.Horizontal) ? obj.Allocation.Width : obj.Allocation.Height;
-
-			base.MouseDragged (theEvent);
+			if (newpos != dragPos) {
+				int nsize;
+				if (dockGroup.Type == DockGroupType.Horizontal) {
+					nsize = dragSize + (newpos - dragPos);
+				} else {
+					nsize = dragSize - (newpos - dragPos);
+				}
+				dockGroup.ResizeItem (dockIndex, nsize);
+			}
 		}
+
+		#endregion
+
 	}
 
 }
