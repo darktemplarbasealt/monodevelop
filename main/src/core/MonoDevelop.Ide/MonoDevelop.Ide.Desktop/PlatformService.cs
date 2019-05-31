@@ -450,6 +450,10 @@ namespace MonoDevelop.Ide.Desktop
 
 		internal virtual void PlaceWindow (Gtk.Window window, int x, int y, int width, int height)
 		{
+			if (window.GdkWindow == null) {
+				return;
+			}
+
 			window.Move (x, y);
 			window.Resize (width, height);
 		}

@@ -1272,38 +1272,6 @@ namespace MonoDevelop.MacIntegration
 			w.AddChildWindow (overlay, NSWindowOrderingMode.Above);
 		}
 
-		internal override void PlaceWindow (Gtk.Window window, int x, int y, int width, int height)
-		{
-			if (window.GdkWindow == null)
-				return; // Not yet realized
-
-			NSWindow w = GtkQuartz.GetWindow (window);
-			y += GetTitleBarHeight (w);
-			var dr = FromDesktopRect (new Gdk.Rectangle (x, y, width, height));
-			var r = w.FrameRectFor (dr);
-			w.SetFrame (r, true);
-			base.PlaceWindow (window, x, y, width, height);
-		}
-
-		static CGRect FromDesktopRect (Gdk.Rectangle r)
-		{
-			var desktopBounds = CalcDesktopBounds ();
-			r.Y = desktopBounds.Height - r.Y - r.Height;
-			if (desktopBounds.Y < 0)
-				r.Y += desktopBounds.Y;
-			return new CGRect (desktopBounds.X + r.X, r.Y, r.Width, r.Height);
-		}
-
-		static Gdk.Rectangle CalcDesktopBounds ()
-		{
-			var desktopBounds = new Gdk.Rectangle ();
-			foreach (var s in NSScreen.Screens) {
-				var r = s.Frame;
-				desktopBounds = desktopBounds.Union (new Gdk.Rectangle ((int)r.X, (int)r.Y, (int)r.Width, (int)r.Height));
-			}
-			return desktopBounds;
-		}
-
 		public override void OpenFolder (FilePath folderPath, FilePath[] selectFiles)
 		{
 			if (selectFiles.Length == 0) {
