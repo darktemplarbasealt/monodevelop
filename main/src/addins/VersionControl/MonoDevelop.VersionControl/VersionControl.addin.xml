@@ -152,6 +152,7 @@
 		<Command id = "MonoDevelop.VersionControl.Commands.Publish"
 			_label = "_Publish in Version Control..."
 			icon = "vc-push"
+			defaultHandler="MonoDevelop.VersionControl.PublishCommandHandler"
 			description = "Publish actual project into repository."/>
 		<Command id = "MonoDevelop.VersionControl.Commands.Checkout"
 			defaultHandler = "MonoDevelop.VersionControl.CheckoutCommand"

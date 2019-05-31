@@ -127,7 +127,16 @@ namespace MonoDevelop.VersionControl
 		{
 			return true;
 		}
-	}	
+	}
+
+	class PublishCommandHandler : SolutionVersionControlCommandHandler
+	{
+		protected override bool RunCommand (VersionControlItemList items, bool test)
+		{
+			VersionControlItem it = items [0];
+			return PublishCommand.Publish (items, it.WorkspaceObject, it.Path, test);
+		}
+	}
 
 	class UpdateCommandHandler: SolutionVersionControlCommandHandler
 	{

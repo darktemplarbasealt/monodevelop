@@ -35,7 +35,7 @@ namespace MonoDevelop.VersionControl.Git
 		string version = null;
 		bool failedToInitialize;
 
-		const string GitExtension = ".git";
+		public const string GitExtension = ".git";
 
 		public override string Name {
 			get { return "Git"; }

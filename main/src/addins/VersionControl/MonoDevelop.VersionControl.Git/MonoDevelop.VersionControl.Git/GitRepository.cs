@@ -905,26 +905,38 @@ namespace MonoDevelop.VersionControl.Git
 
 		protected override Repository OnPublish (string serverPath, FilePath localPath, FilePath[] files, string message, ProgressMonitor monitor)
 		{
+			if (!RootPath.Equals (localPath))
+				RootPath = localPath;
+
 			// Initialize the repository
-			RootPath = localPath;
-			RootRepository = new LibGit2Sharp.Repository (LibGit2Sharp.Repository.Init (localPath));
+			if (RootRepository == null) {
+				if (!RootPath.Combine (GitVersionControl.GitExtension).IsDirectory)
+					RootRepository = new LibGit2Sharp.Repository (LibGit2Sharp.Repository.Init (RootPath));
+
+				RootRepository = new LibGit2Sharp.Repository (RootPath);
+			}
+
+			// Add the repository remote
 			RootRepository.Network.Remotes.Add ("origin", Url);
 
 			// Add the project files
 			ChangeSet cs = CreateChangeSet (localPath);
-			foreach (FilePath fp in files) {
-				LibGit2Sharp.Commands.Stage (RootRepository, RootRepository.ToGitPath (fp));
-				cs.AddFile (fp);
-			}
 
-			// Create the initial commit
-			cs.GlobalComment = message;
-			Commit (cs, monitor);
+			if (files.Length > 0) {
+				// Add the project files
+				foreach (FilePath fp in files) {
+					LibGit2Sharp.Commands.Stage (RootRepository, RootRepository.ToGitPath (fp));
+					cs.AddFile (fp);
+				}
+
+				// Create the initial commit
+				cs.GlobalComment = message;
+				Commit (cs, monitor);
+			}
 
 			RootRepository.Branches.Update (RootRepository.Branches ["master"], branch => branch.TrackedBranch = "refs/remotes/origin/master");
 
 			RetryUntilSuccess (monitor, credType => {
-
 				try {
 					RootRepository.Network.Push (RootRepository.Head, new PushOptions {
 						OnPushStatusError = delegate (PushStatusError e) {
