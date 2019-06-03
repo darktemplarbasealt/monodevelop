@@ -55,7 +55,7 @@ namespace MonoDevelop.Components.Docking
 		public override void MouseEntered (NSEvent theEvent)
 		{
 			if (!dragging) {
-				SetDefaultCursor ();
+				SetResizeCursor ();
 			}
 			hover = true;
 			base.MouseEntered (theEvent);
@@ -70,7 +70,7 @@ namespace MonoDevelop.Components.Docking
 			base.MouseExited (theEvent);
 		}
 
-		void SetDefaultCursor ()
+		void SetResizeCursor ()
 		{
 			if (dockGroup == null) {
 				return;
@@ -85,7 +85,7 @@ namespace MonoDevelop.Components.Docking
 		public override void MouseMoved (NSEvent theEvent)
 		{
 			if (!dragging) {
-				SetDefaultCursor ();
+				SetResizeCursor ();
 			}
 			base.MouseMoved (theEvent);
 		}
@@ -139,7 +139,7 @@ namespace MonoDevelop.Components.Docking
 		public void MouseDragUp (NSEvent theEvent)
 		{
 			if (hover) {
-				NSCursor.ResizeLeftRightCursor.Set ();
+				SetResizeCursor ();
 			} else {
 				NSCursor.ArrowCursor.Set ();
 			}
@@ -148,6 +148,8 @@ namespace MonoDevelop.Components.Docking
 
 		public void MouseDrag (NSEvent theEvent)
 		{
+			SetResizeCursor ();
+
 			var point = NSEvent.CurrentMouseLocation;
 			int newpos;
 			if (dockGroup.Type == DockGroupType.Horizontal) {
