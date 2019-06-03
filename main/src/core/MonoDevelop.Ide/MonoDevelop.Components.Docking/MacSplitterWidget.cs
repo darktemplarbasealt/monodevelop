@@ -29,13 +29,8 @@
 #if MAC
 
 using System;
-using Foundation;
 using AppKit;
-using ObjCRuntime;
 using Gtk;
-using System.Collections.Generic;
-using Gdk;
-using CoreGraphics;
 using MonoDevelop.Components.Mac;
 
 namespace MonoDevelop.Components.Docking
@@ -154,7 +149,7 @@ namespace MonoDevelop.Components.Docking
 		public void MouseDrag (NSEvent theEvent)
 		{
 			var point = NSEvent.CurrentMouseLocation;
-			int newpos; // = (dockGroup.Type == DockGroupType.Horizontal) ? (int)point.X : -(int)point.Y;
+			int newpos;
 			if (dockGroup.Type == DockGroupType.Horizontal) {
 				newpos = (int)point.X;
 			} else {

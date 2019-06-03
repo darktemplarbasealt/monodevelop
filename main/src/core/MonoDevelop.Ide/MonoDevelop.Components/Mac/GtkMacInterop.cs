@@ -48,7 +48,7 @@ namespace MonoDevelop.Components.Mac
 
 		public static T2 NSViewToGtkWidget<T1,T2> (T1 view) where T1 : NSView where T2 : NativeContainerWidget
 		{
-	        var x = (T2) Activator.CreateInstance (typeof (T2), new object [] { gtk_ns_view_new ((IntPtr)view.Handle) });
+			var x = (T2) Activator.CreateInstance (typeof (T2), new object [] { gtk_ns_view_new ((IntPtr)view.Handle) });
 			x.SetNativeContent (view);
 			return x;
 		}

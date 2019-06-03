@@ -315,7 +315,7 @@ namespace MonoDevelop.Components.Docking
 					var widget = Mac.GtkMacInterop.NSViewToGtkWidget<MacSplitterWidget, SplitterContainerWidget> (splitter);
 
 #else
-                     var widget = new SplitterWidget ();
+					var widget = new SplitterWidget ();
 #endif
 					s = new SplitterWidgetWrapper (widget);
 					splitters.Add (s);
