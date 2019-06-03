@@ -295,6 +295,11 @@ namespace MonoDevelop.Ide
 			AddinManager.AddExtensionNodeHandler ("/MonoDevelop/Ide/StartupHandlers", OnExtensionChanged);
 		}
 
+		static public Task<bool> WhenInitializedAsync ()
+		{
+			return initializationTask.Task;
+		}
+
 		public static void BringToFront ()
 		{
 			Initialized += (sender, e) => {
