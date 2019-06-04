@@ -30,7 +30,7 @@ using System.Linq;
 using System.Text;
 
 using AppKit;
-
+using Foundation;
 using MonoDevelop.Components;
 using MonoDevelop.Core;
 using MonoDevelop.Ide;
@@ -38,9 +38,48 @@ using MonoDevelop.Ide.Extensions;
 using MonoDevelop.Ide.Gui;
 using MonoDevelop.MacInterop;
 
-
 namespace MonoDevelop.MacIntegration
 {
+	interface ICentrableWindow
+	{
+		void CenterInWindow (Window window);
+	}
+
+	class OpenPanel : NSOpenPanel, ICentrableWindow
+	{
+		public OpenPanel ()
+		{
+		}
+
+		public OpenPanel (NSCoder coder) : base (coder)
+		{
+		}
+
+		protected OpenPanel (NSObjectFlag t) : base (t)
+		{
+		}
+
+		protected internal OpenPanel (IntPtr handle) : base (handle)
+		{
+		}
+
+		public override void Center ()
+		{
+			if (parent != null) {
+				MessageService.CenterWindow (this, parent);
+			} else {
+				//default behaviour
+				base.Center ();
+			}
+		}
+
+		Window parent;
+		public void CenterInWindow (Window window)
+		{
+			this.parent = window;
+		}
+	}
+
 	class MacOpenFileDialogHandler : MacCommonFileDialogHandler<OpenFileDialogData, MacOpenFileDialogHandler.SaveState>, IOpenFileDialogHandler
 	{
 		internal class SaveState
@@ -65,7 +104,7 @@ namespace MonoDevelop.MacIntegration
 				return new NSSavePanel ();
 			}
 
-			return new NSOpenPanel {
+			return new OpenPanel {
 				CanChooseDirectories = (data.Action & FileChooserAction.FolderFlags) != 0,
 				CanChooseFiles = (data.Action & FileChooserAction.FileFlags) != 0,
 			};
@@ -107,8 +146,13 @@ namespace MonoDevelop.MacIntegration
 							state.EncodingSelector.Enabled = !slnViewerSelected;
 					};
 
+					var parent = data.TransientFor ?? MessageService.RootWindow;
+					if (data.IsCenteredToParent && panel is ICentrableWindow centrableWindow) {
+						centrableWindow.CenterInWindow (parent);
+					}
+
 					if (panel.RunModal () == 0 && !pathAlreadySet) {
-						IdeServices.DesktopService.FocusWindow (data.TransientFor ?? MessageService.RootWindow);
+						IdeServices.DesktopService.FocusWindow (parent);
 						return false;
 					}
 					if (!pathAlreadySet)
@@ -124,7 +168,7 @@ namespace MonoDevelop.MacIntegration
 							state.CurrentViewers [(int)state.ViewerSelector.IndexOfSelectedItem] : null;
 					}
 
-					IdeServices.DesktopService.FocusWindow (data.TransientFor ?? MessageService.RootWindow);
+					IdeServices.DesktopService.FocusWindow (parent);
 				}
 			} catch (Exception ex) {
 				LoggingService.LogInternalError ("Error in Open File dialog", ex);

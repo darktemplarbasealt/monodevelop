@@ -91,7 +91,15 @@ namespace MonoDevelop.Ide.Gui.Dialogs
 		public FileViewer SelectedViewer {
 			get { return data.SelectedViewer; }
 		}
-		
+
+		/// <summary>
+		/// Selected viewer.
+		/// </summary>
+		public bool IsCenteredToParent {
+			get { return data.IsCenteredToParent; }
+			set { data.IsCenteredToParent = value; }
+		}
+
 		protected override bool RunDefault ()
 		{
 			var win = new FileSelectorDialog (Title, Action.ToGtkAction ());
