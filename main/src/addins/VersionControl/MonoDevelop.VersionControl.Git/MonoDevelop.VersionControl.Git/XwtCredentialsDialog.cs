@@ -88,7 +88,7 @@ namespace MonoDevelop.VersionControl.Git
 		void UpdateStatus (string uri, SupportedCredentialTypes supportedCredential, bool hasError)
 		{
 			if (hasError) {
-				string errorMessage = GettextCatalog.GetString ("Invalid username or password for repository '{0}'. Please try again.", uri);
+				string errorMessage = GettextCatalog.GetString ("Invalid username or password.");
 				if (supportedCredential.HasFlag (SupportedCredentialTypes.Ssh))
 					errorMessage = GettextCatalog.GetString ("Invalid key for repository '{0}'. Please try again.", uri);
 
