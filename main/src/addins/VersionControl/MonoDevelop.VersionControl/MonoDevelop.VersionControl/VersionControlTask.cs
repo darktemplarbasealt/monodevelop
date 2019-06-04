@@ -58,9 +58,11 @@ namespace MonoDevelop.VersionControl
 					} else if (exception is VersionControlException) {
 						var msg = GettextCatalog.GetString ("Version control operation failed: ");
 						tracker.ReportError (msg + exception.Message, exception);
+						LoggingService.LogError ("Version Control operation failed: ", exception);
 					} else {
 						var msg = GettextCatalog.GetString ("Version control operation failed: ");
 						tracker.ReportError (msg, exception);
+						LoggingService.LogError ("Version Control operation failed: ", exception);
 					}
 				}
 				Wakeup ();

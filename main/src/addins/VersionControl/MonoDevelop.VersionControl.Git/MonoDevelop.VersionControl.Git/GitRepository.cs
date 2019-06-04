@@ -981,6 +981,7 @@ namespace MonoDevelop.VersionControl.Git
 						GitCredentials.StoreCredentials (credType);
 						retry = false;
 					} catch (AuthenticationException e) {
+						LoggingService.LogInternalError (e);
 						GitCredentials.InvalidateCredentials (credType);
 						retry = Runtime.RunInMainThread (() => HandleAuthenticationException (e)).Result;
 						if (!retry)
